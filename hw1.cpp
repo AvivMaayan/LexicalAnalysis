@@ -36,9 +36,6 @@ int main()
         case BOOL:
             printToken("BOOL");
             break;
-        case AUTO:
-            printToken("AUTO");
-            break;
         case AND:
             printToken("AND");
             break;
