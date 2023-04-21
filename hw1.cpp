@@ -96,7 +96,8 @@ int main()
             printToken("BINOP");
             break;
         case COMMENT:
-            cout << yylineno << " COMMENT //" << endl;
+            // COMMENT has a special way of formatting
+            cout << yylineno << " " << token << " //" << endl;
             break;
         case ID:
             printToken("ID");
@@ -117,10 +118,10 @@ int main()
             printErrorString();
             exit(0);
         case ERROR_ESCAPE_SEQ:
-            printInvalidEscapeSequence();
+            printErrorEscapeSeq();
             exit(0);
         case ERROR_HEX_SEQ:
-            printInvalidHexSequence();
+            printErrorHexSeq();
             exit(0);
         default:
             printErrorChar();
@@ -133,34 +134,36 @@ int main()
 /**
  * print the regular way of a legal token, i.e:
  * <lineNumber> <TOKEN> <value>
-*/
-void printToken(string name)
+ */
+void printToken(string token)
 {
-    cout << yylineno << " " << name << " " << yytext << endl;
+    cout << yylineno << " " << token << " " << yytext << endl;
 }
 
 /**
  * print an error of an illegal char, i.e:
  * Error <char>/n
-*/
+ */
 void printErrorChar()
 {
-    cout << "Error " << yytext << endl;
+    cout << "Error " << yytext[0] << endl;
 }
 
 /**
  * print an error of a '\n' in the middle of the string, i.e:
  * Error unclosed string\n
-*/
+ */
 void printErrorString()
 {
     cout << "Error unclosed string" << endl;
 }
 
-
-void printInvalidHexSequence()
+/**
+ * print an error of the
+ */
+void printErrorEscapeSeq()
 {
-    std::string str(yytext);
+    string str(yytext); // make the text of the line string
     int size = str.size();
     cout << "Error undefined escape sequence ";
     if (str[size - 2] == 'x')
@@ -174,7 +177,7 @@ void printInvalidHexSequence()
     cout << endl;
 }
 
-void printInvalidEscapeSequence()
+void printErrorHexSeq()
 {
     std::string str(yytext);
     char ch = str[str.size() - 1];
