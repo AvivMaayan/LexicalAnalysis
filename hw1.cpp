@@ -6,13 +6,12 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void printStringToken();
-void printInvalidEscapeSequence();
-void printInvalidHexSequence();
-void printToken(string name)
-{
-    cout << yylineno << " " << name << " " << yytext << endl;
-}
+void printToken(string name);
+void printErrorChar();
+void printErrorString();
+void printErrorEscapeSeq();
+void printErrorHexSeq();
+void printString();
 
 int main()
 {
@@ -93,11 +92,11 @@ int main()
         case RELOP:
             printToken("RELOP");
             break;
-        case COMMENT:
-            cout << yylineno << " COMMENT //" << endl;
-            break;
         case BINOP:
             printToken("BINOP");
+            break;
+        case COMMENT:
+            cout << yylineno << " COMMENT //" << endl;
             break;
         case ID:
             printToken("ID");
@@ -108,30 +107,56 @@ int main()
         case STRING:
             printString();
             break;
-        case UNCLOSED_STRING:
-            cout << "Error unclosed string" << endl;
+        case OVERRIDE:
+            printToken("OVERRIDE");
+            break;
+        case ERROR_CHAR:
+            printErrorChar();
             exit(0);
-            break;
-        case INVALID_ESCAPE_SEQUENCE:
+        case ERROR_UNCLOSED_STRING:
+            printErrorString();
+            exit(0);
+        case ERROR_ESCAPE_SEQ:
             printInvalidEscapeSequence();
-            break;
-        case INVALID_HEX:
+            exit(0);
+        case ERROR_HEX_SEQ:
             printInvalidHexSequence();
             exit(0);
-        case ERROR:
-            cout << "Error " << yytext << endl;
-            exit(0);
         default:
-            cout << "Error " << yytext << endl;
+            printErrorChar();
             exit(0);
         }
         return 0;
     }
-
-        void handleToken(int token)
-    {
-    }
 }
+
+/**
+ * print the regular way of a legal token, i.e:
+ * <lineNumber> <TOKEN> <value>
+*/
+void printToken(string name)
+{
+    cout << yylineno << " " << name << " " << yytext << endl;
+}
+
+/**
+ * print an error of an illegal char, i.e:
+ * Error <char>/n
+*/
+void printErrorChar()
+{
+    cout << "Error " << yytext << endl;
+}
+
+/**
+ * print an error of a '\n' in the middle of the string, i.e:
+ * Error unclosed string\n
+*/
+void printErrorString()
+{
+    cout << "Error unclosed string" << endl;
+}
+
 
 void printInvalidHexSequence()
 {
