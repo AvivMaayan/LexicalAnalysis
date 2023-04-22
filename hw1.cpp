@@ -10,7 +10,6 @@ void printToken(string name);
 void printErrorChar();
 void printErrorString();
 void printErrorEscapeSeq();
-void printErrorHexSeq();
 void printString();
 
 int main()
@@ -97,7 +96,7 @@ int main()
             break;
         case COMMENT:
             // COMMENT has a special way of formatting
-            cout << yylineno << " " << token << " //" << endl;
+            cout << yylineno << " COMMENT" << " //" << endl;
             break;
         case ID:
             printToken("ID");
@@ -121,13 +120,12 @@ int main()
             printErrorEscapeSeq();
             exit(0);
         case ERROR_HEX_SEQ:
-            printErrorHexSeq();
+            printErrorEscapeSeq();
             exit(0);
         default:
             printErrorChar();
             exit(0);
         }
-        return 0;
     }
 }
 
@@ -159,30 +157,34 @@ void printErrorString()
 }
 
 /**
- * print an error of the
+ * print an error of the invalid escape sequence
  */
 void printErrorEscapeSeq()
 {
     string str(yytext); // make the text of the line string
     int size = str.size();
-    cout << "Error undefined escape sequence ";
-    if (str[size - 2] == 'x')
+    int index_of_last_escape = str.find_last_of('\\');
+    cout << "Error undefined escape sequence "; // the begining of the message
+
+    // if '\' is the last character, print a string error instead
+    if(index_of_last_escape == str.size() - 1)
     {
-        cout << str[size - 2] << endl;
+        printErrorString();
         return;
     }
+    
+    // if '\' has just 1 character after it, print all of the escape seq
+    if(index_of_last_escape == size - 2)
+    {
+        cout << str.at(size - 1) << endl;
+        return;
+    }
+
+    // the error is of invalid HEX value since there are at least 2 characters after the '\'
     cout << "x" << str[size - 2];
     if (str[size - 1] != '"')
         cout << str[size - 1];
     cout << endl;
-}
-
-void printErrorHexSeq()
-{
-    std::string str(yytext);
-    char ch = str[str.size() - 1];
-    cout << "Error undefined escape sequence " << ch << endl;
-    exit(0);
 }
 
 void printString()
