@@ -1,8 +1,10 @@
 %{
 
+
 /* Declaration Section */
 #include <stdio.h>
 #include "tokens.hpp"
+
 
 %}
 
@@ -23,11 +25,13 @@ hex              (\\x[0-7][0-9A-Fa-f])
 
 %%
 
+
 void                                                                                return VOID;
 int                                                                                 return INT;
 byte                                                                                return BYTE;
 b                                                                                   return B;
 bool                                                                                return BOOL;
+override                                                                            return OVERRIDE;
 override                                                                            return OVERRIDE;
 and                                                                                 return AND;
 or                                                                                  return OR;
