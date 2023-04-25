@@ -52,11 +52,11 @@ continue                                                                        
 \/\/[^{cr}{lf}]*                                                                    return COMMENT;
 {letter}{letterdigit}*                                                              return ID;
 {zero}|({non_zero}+{digit}*)                                                        return NUM;
-([0]+{digit}*)|0												return ERROR;
+([0]+{digit}*)|0												return ERROR_CHAR;
 \"({printable}|{escape}|{hex})*\"                                                    return STRING;
-\"({string}|{escape}|{hex})*                                                    return UNCLOSED_STRING;
-\"({string}|{escape}|{hex})*\\[^\\ntr\"0]                                         return INVALID_ESCAPE_SEQUENCE;
-\"({string}|{escape}|{hex})*\\x([^0-7][0-9A-Fa-f]|[0-7][^0-9A-Fa-f]|[^0-7][^0-9A-Fa-f]|[^0-9A-Fa-f]) return INVALID_HEX;
+\"({string}|{escape}|{hex})*                                                    return ERROR_UNCLOSED_STRING;
+\"({string}|{escape}|{hex})*\\[^\\ntr\"0]                                         return ERROR_ESCAPE_SEQ;
+\"({string}|{escape}|{hex})*\\x([^0-7][0-9A-Fa-f]|[0-7][^0-9A-Fa-f]|[^0-7][^0-9A-Fa-f]|[^0-9A-Fa-f]) return ERROR_ESCAPE_SEQ;
 {whitespace}                                                                        ;
 .                                                                                   return ERROR;
 

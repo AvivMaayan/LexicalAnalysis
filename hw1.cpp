@@ -6,13 +6,11 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void printStringToken();
-void printInvalidEscapeSequence();
-void printInvalidHexSequence();
-void printToken(string name)
-{
-    cout << yylineno << " " << name << " " << yytext << endl;
-}
+void printToken(string name);
+void printErrorChar();
+void printErrorString();
+void printErrorEscapeSeq();
+void printString();
 
 int main()
 {
@@ -93,11 +91,12 @@ int main()
         case RELOP:
             printToken("RELOP");
             break;
-        case COMMENT:
-            cout << yylineno << " COMMENT //" << endl;
-            break;
         case BINOP:
             printToken("BINOP");
+            break;
+        case COMMENT:
+            // COMMENT has a special way of formatting
+            cout << yylineno << " COMMENT" << " //" << endl;
             break;
         case ID:
             printToken("ID");
@@ -108,53 +107,84 @@ int main()
         case STRING:
             printString();
             break;
-        case UNCLOSED_STRING:
-            cout << "Error unclosed string" << endl;
-            exit(0);
+        case OVERRIDE:
+            printToken("OVERRIDE");
             break;
-        case INVALID_ESCAPE_SEQUENCE:
-            printInvalidEscapeSequence();
-            break;
-        case INVALID_HEX:
-            printInvalidHexSequence();
+        case ERROR_CHAR:
+            printErrorChar();
             exit(0);
-        case ERROR:
-            cout << "Error " << yytext << endl;
+        case ERROR_UNCLOSED_STRING:
+            printErrorString();
+            exit(0);
+        case ERROR_ESCAPE_SEQ:
+            printErrorEscapeSeq();
+            exit(0);
+        case ERROR_HEX_SEQ:
+            printErrorEscapeSeq();
             exit(0);
         default:
-            cout << "Error " << yytext << endl;
+            printErrorChar();
             exit(0);
         }
-        return 0;
-    }
-
-        void handleToken(int token)
-    {
     }
 }
 
-void printInvalidHexSequence()
+/**
+ * print the regular way of a legal token, i.e:
+ * <lineNumber> <TOKEN> <value>
+ */
+void printToken(string token)
 {
-    std::string str(yytext);
+    cout << yylineno << " " << token << " " << yytext << endl;
+}
+
+/**
+ * print an error of an illegal char, i.e:
+ * Error <char>/n
+ */
+void printErrorChar()
+{
+    cout << "Error " << yytext[0] << endl;
+}
+
+/**
+ * print an error of a '\n' in the middle of the string, i.e:
+ * Error unclosed string\n
+ */
+void printErrorString()
+{
+    cout << "Error unclosed string" << endl;
+}
+
+/**
+ * print an error of the invalid escape sequence
+ */
+void printErrorEscapeSeq()
+{
+    string str(yytext); // make the text of the line string
     int size = str.size();
-    cout << "Error undefined escape sequence ";
-    if (str[size - 2] == 'x')
+    int index_of_last_escape = str.find_last_of('\\');
+    cout << "Error undefined escape sequence "; // the begining of the message
+
+    // if '\' is the last character, print a string error instead
+    if(index_of_last_escape == str.size() - 1)
     {
-        cout << str[size - 2] << endl;
+        printErrorString();
         return;
     }
+    
+    // if '\' has just 1 character after it, print all of the escape seq
+    if(index_of_last_escape == size - 2)
+    {
+        cout << str.at(size - 1) << endl;
+        return;
+    }
+
+    // the error is of invalid HEX value since there are at least 2 characters after the '\'
     cout << "x" << str[size - 2];
     if (str[size - 1] != '"')
         cout << str[size - 1];
     cout << endl;
-}
-
-void printInvalidEscapeSequence()
-{
-    std::string str(yytext);
-    char ch = str[str.size() - 1];
-    cout << "Error undefined escape sequence " << ch << endl;
-    exit(0);
 }
 
 void printString()
