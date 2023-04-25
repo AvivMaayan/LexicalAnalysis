@@ -1,28 +1,21 @@
 %{
-
 /* Declaration Section */
 #include <stdio.h>
 #include "tokens.hpp"
-
 %}
 
 %option yylineno
 %option noyywrap
-zero             (0)
-non_zero         ([1-9])
+%x STR
 digit            ([0-9])
 letter           ([a-zA-Z])
 letterdigit      ([a-zA-Z0-9])
-cr               (\r)
-lf               (\n)
-tab              (\t)
-whitespace       ([\r\n\t ])
-printable        ([ !#-\[\]-~	])
-escape           (\\[\\\"nrt0])
-hex              (\\x[0-7][0-9A-Fa-f])
+string           ([ !#-\[\]-~	])
+escape           ([\\ntr\"0])
+hex              (x[0-7][0-9A-Fa-f])
+whitespace       ([\t\n\r ])
 
 %%
-
 void                                                                                return VOID;
 int                                                                                 return INT;
 byte                                                                                return BYTE;
@@ -47,17 +40,15 @@ continue                                                                        
 \{                                                                                  return LBRACE;
 \}                                                                                  return RBRACE;
 =                                                                                   return ASSIGN;
-[<>=!]=|<|>                                                                         return RELOP;
-[*/+-]                                                                              return BINOP;
-\/\/[^\n\r]*                                                                    return COMMENT;
+[<>=!]=|>|<                                                                         return RELOP;
+[-+*/]                                                                              return BINOP;
+\/\/[^\n\r]*                                                                        return COMMENT;
 {letter}{letterdigit}*                                                              return ID;
-{zero}|({non_zero}+{digit}*)                                                        return NUM;
-([0]+{digit}*)|0                                                                    return ERROR_CHAR;
-\"({printable}|{escape}|{hex})*\"                                                   return STRING;
-\"({printable}|{escape}|{hex})*                                                     return ERROR_UNCLOSED_STRING;
-\"({printable}|{escape}|{hex})*\\[^\\ntr\"0]                                        return ERROR_ESCAPE_SEQ;
-\"({printable}|{escape}|{hex})*\\x([^0-7][0-9A-Fa-f]|[0-7][^0-9A-Fa-f]|[^0-7][^0-9A-Fa-f]|[^0-9A-Fa-f]) return ERROR_ESCAPE_SEQ;
+([1-9]+{digit}*)|0                                                                  return NUM;
+([0]+{digit}*)|0												return ERROR_CHAR;
+\"({string}|\\{escape}|\\{hex})*\"                                                    return STRING;
+\"({string}|\\{escape}|\\{hex})*                                                    return ERROR_UNCLOSED_STRING;
+\"({string}|\\{escape}|\\{hex})*\\[^\\ntr\"0]                                         return ERROR_ESCAPE_SEQ;
+\"({string}|\\{escape}|\\{hex})*\\x([^0-7][0-9A-Fa-f]|[0-7][^0-9A-Fa-f]|[^0-7][^0-9A-Fa-f]|[^0-9A-Fa-f]) return ERROR_ESCAPE_SEQ;
 {whitespace}                                                                        ;
 .                                                                                   return ERROR_CHAR;
-
-%%

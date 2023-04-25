@@ -33,5 +33,3 @@ else
   # If the exit code is not 0, the build failed
   echo -e "${RED}build FAILED${NC}"
 fi
-
-
