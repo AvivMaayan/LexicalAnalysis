@@ -11,6 +11,9 @@ void printErrorChar();
 void printErrorString();
 void printErrorEscapeSeq();
 void printString();
+void printErrorHexSeq();
+int getDecimalFromHex(std::string hex_number);
+void printAfterEscape(char next_ch);
 
 int main()
 {
@@ -96,7 +99,8 @@ int main()
             break;
         case COMMENT:
             // COMMENT has a special way of formatting
-            cout << yylineno << " COMMENT" << " //" << endl;
+            cout << yylineno << " COMMENT"
+                 << " //" << endl;
             break;
         case ID:
             printToken("ID");
@@ -120,7 +124,7 @@ int main()
             printErrorEscapeSeq();
             exit(0);
         case ERROR_HEX_SEQ:
-            printErrorEscapeSeq();
+            printErrorHexSeq();
             exit(0);
         default:
             printErrorChar();
@@ -140,7 +144,7 @@ void printToken(string token)
 
 /**
  * print an error of an illegal char, i.e:
- * Error <char>/n
+ * Error <char>\n
  */
 void printErrorChar()
 {
@@ -167,23 +171,35 @@ void printErrorEscapeSeq()
     cout << "Error undefined escape sequence "; // the begining of the message
 
     // if '\' is the last character, print a string error instead
-    if(index_of_last_escape == str.size() - 1)
+    if (index_of_last_escape == str.size() - 1)
     {
         printErrorString();
-        return;
-    }
-    
-    // if '\' has just 1 character after it, print all of the escape seq
-    if(index_of_last_escape == size - 2)
-    {
-        cout << str.at(size - 1) << endl;
-        return;
     }
 
-    // the error is of invalid HEX value since there are at least 2 characters after the '\'
-    cout << "x" << str[size - 2];
-    if (str[size - 1] != '"')
-        cout << str[size - 1];
+    // if '\' has just 1 character after it, print it
+    else if (index_of_last_escape == size - 2)
+    {
+        cout << str.at(size - 1) << endl;
+    }
+}
+
+/*
+ * print the error of an invalid hex escape sequence
+ */
+void printErrorHexSeq()
+{
+    string str(yytext); // make the text of the line string
+    int index_of_last_escape = str.find_last_of("\\");
+    cout << "Error undefined escape sequence "; // the begining of the message
+    cout << "x";
+    if (str[index_of_last_escape + 2] != '"')
+    {
+        cout << str[index_of_last_escape + 2];
+        if (str[index_of_last_escape + 3] != '"')
+        {
+            cout << str[index_of_last_escape + 3];
+        }
+    }
     cout << endl;
 }
 
@@ -193,48 +209,69 @@ void printString()
     cout << yylineno << " STRING ";
     for (int i = 0; i < str.size(); i++)
     {
-        char ch = str[i];
+        char current = str[i];
         char next_ch = str[i + 1];
-        if (ch == '"')
+        if (current == '"')
             continue;
-        else if (ch == '\\' && next_ch == 'x')
+        // deal with special cases of '\<something>'
+        if (current == '\\')
         {
-            std::stringstream ss;
-            ss << std::hex << str.substr(i + 2, 2);
-            int x;
-            ss >> x;
-            cout << char(x);
-            i += 3;
-        }
-        else if (ch == '\\' && next_ch == 'n')
-        {
-            cout << '\n';
-            i++;
-        }
-        else if (ch == '\\' && next_ch == 'r')
-        {
-            cout << '\r';
-            i++;
-        }
-        else if (ch == '\\' && next_ch == 't')
-        {
-            cout << '\t';
-            i++;
-        }
-        else if (ch == '\\' && next_ch == '\"')
-        {
-            cout << '\"';
-            i++;
-        }
-        else if (ch == '\\')
-        {
-            cout << '\\';
-            i++;
+            if (next_ch == '0')
+            { // special null character check
+                break;
+            }
+            if (next_ch == 'x')
+            {
+                int x = getDecimalFromHex(str.substr(i + 2, 2));
+                // check for the NULL case:
+                if (!x)
+                    break;
+                cout << char(x);
+                i += 3;
+            }
+            else
+            {
+                printAfterEscape(next_ch);
+                i++;
+            }
         }
         else
         {
-            cout << ch;
+            cout << current;
         }
     }
     cout << endl;
+}
+
+int getDecimalFromHex(std::string hex_number)
+{
+    std::stringstream ss;
+    ss << std::hex << hex_number;
+    int x;
+    ss >> x;
+    return x;
+}
+
+void printAfterEscape(char next_ch)
+{
+    if (next_ch == 'n')
+    {
+        cout << '\n';
+    }
+    else if (next_ch == 'r')
+    {
+        cout << '\r';
+    }
+    else if (next_ch == 't')
+    {
+        cout << '\t';
+    }
+    else if (next_ch == '\"')
+    {
+        cout << '\"';
+    }
+    else
+    {
+        cout << '\\';
+    }
 }
