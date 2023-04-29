@@ -7,10 +7,11 @@ using std::endl;
 using std::string;
 
 void printToken(string name);
+void printComment();
+void printString();
 void printErrorChar();
 void printErrorString();
 void printErrorEscapeSeq();
-void printString();
 void printErrorHexSeq();
 int getDecimalFromHex(std::string hex_number);
 void printAfterEscape(char next_ch);
@@ -97,22 +98,20 @@ int main()
         case BINOP:
             printToken("BINOP");
             break;
-        case COMMENT:
-            // COMMENT has a special way of formatting
-            cout << yylineno << " COMMENT"
-                 << " //" << endl;
-            break;
         case ID:
             printToken("ID");
             break;
         case NUM:
             printToken("NUM");
             break;
-        case STRING:
-            printString();
-            break;
         case OVERRIDE:
             printToken("OVERRIDE");
+            break;
+        case COMMENT:
+            printComment();
+            break;
+        case STRING:
+            printString();
             break;
         case ERROR_CHAR:
             printErrorChar();
@@ -140,6 +139,55 @@ int main()
 void printToken(string token)
 {
     cout << yylineno << " " << token << " " << yytext << endl;
+}
+
+/**
+ * print comment, i.e:
+ * <lineNumber> COMMENT //
+ */
+void printComment()
+{
+    cout << yylineno << " COMMENT //" << endl;
+}
+
+void printString()
+{
+    std::string str(yytext);
+    cout << yylineno << " STRING ";
+    for (int i = 0; i < str.size(); i++)
+    {
+        char current = str[i];
+        char next_ch = str[i + 1];
+        if (current == '"')
+            continue;
+        // deal with special cases of '\<something>'
+        if (current == '\\')
+        {
+            if (next_ch == '0')
+            { // special null character check
+                break;
+            }
+            if (next_ch == 'x')
+            {
+                int x = getDecimalFromHex(str.substr(i + 2, 2));
+                // check for the NULL case:
+                if (!x)
+                    break;
+                cout << char(x);
+                i += 3;
+            }
+            else
+            {
+                printAfterEscape(next_ch);
+                i++;
+            }
+        }
+        else
+        {
+            cout << current;
+        }
+    }
+    cout << endl;
 }
 
 /**
@@ -198,46 +246,6 @@ void printErrorHexSeq()
         if (str[index_of_last_escape + 3] != '"')
         {
             cout << str[index_of_last_escape + 3];
-        }
-    }
-    cout << endl;
-}
-
-void printString()
-{
-    std::string str(yytext);
-    cout << yylineno << " STRING ";
-    for (int i = 0; i < str.size(); i++)
-    {
-        char current = str[i];
-        char next_ch = str[i + 1];
-        if (current == '"')
-            continue;
-        // deal with special cases of '\<something>'
-        if (current == '\\')
-        {
-            if (next_ch == '0')
-            { // special null character check
-                break;
-            }
-            if (next_ch == 'x')
-            {
-                int x = getDecimalFromHex(str.substr(i + 2, 2));
-                // check for the NULL case:
-                if (!x)
-                    break;
-                cout << char(x);
-                i += 3;
-            }
-            else
-            {
-                printAfterEscape(next_ch);
-                i++;
-            }
-        }
-        else
-        {
-            cout << current;
         }
     }
     cout << endl;
